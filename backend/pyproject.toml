@@ -6,9 +6,10 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.20.1",
+    "asyncpg>=0.30.0",
+    "bcrypt>=4.1,<6",
     "fastapi>=0.165.0",
     "orjson>=3.13.0",
-    "passlib[bcrypt]>=1.7.4",
     "pydantic-settings>=2.16.3",
     "pydantic[email]>=2.14.4",
     "python-jose[cryptography]>=3.5.0",
@@ -24,3 +25,17 @@ dev = [
     "pytest-asyncio>=1.5.0",
     "ruff>=0.17.6",
 ]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+extend-exclude = ["alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC"]
+ignore = ["B008"]
