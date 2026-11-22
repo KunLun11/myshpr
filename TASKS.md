@@ -2661,13 +2661,12 @@ checklist_total = (
     .label("checklist_total")
 )
 
-stmt = (
-    select(Project, inactive_days, status_rank, checklist_done, checklist_total)
-    .where(
-        Project.academic_year_id == academic_year_id,
-        Project.class_id == class_id,
-        Project.archived_at.is_(None),
-    )
+stmt = select(
+    Project, inactive_days, status_rank, checklist_done, checklist_total
+).where(
+    Project.academic_year_id == academic_year_id,
+    Project.class_id == class_id,
+    Project.archived_at.is_(None),
 )
 ```
 
