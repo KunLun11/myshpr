@@ -38,6 +38,12 @@ docker compose -f docker-compose.prod.yml down
 POSTGRES_PASSWORD=<strong-password> docker compose -f docker-compose.prod.yml up -d --build
 ```
 
+- В prod задайте `CORS_ORIGINS` и `CSRF_TRUSTED_ORIGINS` (например,
+  `https://project.school.example`). Без них браузерные POST/PATCH/DELETE
+  отклоняются origin-проверкой (fail closed).
+- Админка живёт на том же домене под `/admin/**`, закрыта от индексации и
+  требует обычного входа с ролью `school_admin`/`super_admin`.
+
 ## Общее
 
 ```bash

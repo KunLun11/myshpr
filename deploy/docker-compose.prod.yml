@@ -39,6 +39,23 @@ services:
       timeout: 5s
       retries: 3
 
+  worker:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+      target: prod
+    command: ["/app/.venv/bin/arq", "app.workers.settings.WorkerSettings"]
+    env_file:
+      - ../backend/.env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
   frontend:
     build:
       context: ../frontend

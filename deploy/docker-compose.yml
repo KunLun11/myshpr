@@ -17,6 +17,23 @@ services:
       - ../backend:/app
       - backend_venv:/app/.venv
 
+  worker:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+      target: dev
+    command: ["uv", "run", "arq", "app.workers.settings.WorkerSettings"]
+    env_file:
+      - ../backend/.env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../backend:/app
+      - backend_venv:/app/.venv
+
   frontend:
     build:
       context: ../frontend
@@ -24,6 +41,7 @@ services:
       target: dev
     environment:
       NODE_OPTIONS: "--max-old-space-size=512"
+      BACKEND_URL: http://backend:8000
     ports:
       - "3000:3000"
     depends_on:
