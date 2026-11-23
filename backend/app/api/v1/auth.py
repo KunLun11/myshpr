@@ -50,7 +50,7 @@ async def register_student(
     response: Response,
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> MeOut:
-    enforce_rate_limit(register_limiter, _client_key(request, "register"))
+    await enforce_rate_limit(register_limiter, _client_key(request, "register"))
 
     user = await auth_service.register_student(
         session,
@@ -78,7 +78,7 @@ async def login(
     response: Response,
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> MeOut:
-    enforce_rate_limit(login_limiter, _client_key(request, "login"))
+    await enforce_rate_limit(login_limiter, _client_key(request, "login"))
 
     user = await auth_service.authenticate(
         session, email=str(payload.email), password=payload.password

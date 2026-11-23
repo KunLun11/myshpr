@@ -19,7 +19,9 @@ from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.csrf import allowed_origin_set, is_request_allowed
 from app.core.errors import AppError
-from app.core.logging import get_logger, setup_logging
+from app.core.logging import get_logger, request_id_ctx, setup_logging
+from app.core.metrics import registry
+from app.core.rate_limit import close_rate_limit_redis
 from app.db.session import engine
 
 logger = get_logger(__name__)
@@ -28,6 +30,10 @@ SECURITY_HEADERS = {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "Cross-Origin-Opener-Policy": "same-origin",
+    # The API only returns JSON and file downloads; nothing should render.
+    "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
 }
 
 
@@ -36,8 +42,25 @@ async def lifespan(app: FastAPI):
     setup_logging()
     logger.info("Application starting (env=%s)", get_settings().ENV)
     yield
+    await close_rate_limit_redis()
     await engine.dispose()
     logger.info("Application stopped")
+
+
+def _route_template(request: Request) -> str:
+    """Route label with concrete path params replaced by their names.
+
+    FastAPI 0.165 wraps included routers, so ``route.path`` is the router-local
+    path without the ``/api/v1`` prefix. The full URL path plus the matched
+    ``path_params`` reconstructs a low-cardinality template.
+    """
+    if request.scope.get("route") is None:
+        return "unmatched"
+    path = request.url.path
+    for name, value in (request.scope.get("path_params") or {}).items():
+        if value not in (None, ""):
+            path = path.replace(str(value), "{" + name + "}")
+    return path
 
 
 async def _origin_guard_middleware(request: Request, call_next: Callable[[Request], Awaitable]):
@@ -73,11 +96,30 @@ async def _origin_guard_middleware(request: Request, call_next: Callable[[Reques
 
 async def _request_context_middleware(request: Request, call_next: Callable[[Request], Awaitable]):
     request_id = request.headers.get("X-Request-ID", uuid.uuid4().hex)
+    request.state.request_id = request_id
+    token = request_id_ctx.set(request_id)
     start = time.perf_counter()
-    response = await call_next(request)
-    duration_ms = round((time.perf_counter() - start) * 1000, 2)
+    try:
+        response = await call_next(request)
+    finally:
+        request_id_ctx.reset(token)
+    duration = time.perf_counter() - start
+    duration_ms = round(duration * 1000, 2)
+
+    route_path = _route_template(request)
+    user_id = getattr(request.state, "user_id", None)
+
     response.headers["X-Request-ID"] = request_id
     response.headers.update(SECURITY_HEADERS)
+    if get_settings().HSTS_ENABLED:
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+
+    registry.observe_request(
+        method=request.method,
+        route=route_path,
+        status=response.status_code,
+        seconds=duration,
+    )
     logger.info(
         "request_id=%s method=%s path=%s status=%s duration_ms=%s",
         request_id,
@@ -85,6 +127,14 @@ async def _request_context_middleware(request: Request, call_next: Callable[[Req
         request.url.path,
         response.status_code,
         duration_ms,
+        extra={
+            "request_id": request_id,
+            "user_id": user_id,
+            "route": route_path,
+            "method": request.method,
+            "status": response.status_code,
+            "duration_ms": duration_ms,
+        },
     )
     return response
 

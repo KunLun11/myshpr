@@ -3,8 +3,8 @@
 import uuid
 from datetime import UTC, datetime, timedelta
 
+import jwt
 import pytest
-from jose import jwt
 
 from app.core.config import get_settings
 from app.core.security import (
@@ -62,7 +62,7 @@ def test_bad_signature_rejected() -> None:
             "type": "access",
             "exp": int((datetime.now(UTC) + timedelta(minutes=5)).timestamp()),
         },
-        "another-secret",
+        "another-secret-another-secret-32",
         algorithm=JWT_ALGORITHM,
     )
 

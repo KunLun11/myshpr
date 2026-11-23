@@ -4,12 +4,12 @@ import uuid
 from collections.abc import Callable
 from typing import Annotated
 
-from fastapi import Cookie, Depends
+from fastapi import Cookie, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.cookies import ACCESS_COOKIE
 from app.core.errors import ForbiddenError, UnauthorizedError
-from app.core.logging import get_logger
+from app.core.logging import get_logger, user_id_ctx
 from app.core.security import TokenError, decode_access_token
 from app.db.session import get_session
 from app.models import SchoolClass, User
@@ -29,6 +29,7 @@ __all__ = [
 
 
 async def get_current_user(
+    request: Request,
     session: Annotated[AsyncSession, Depends(get_session)],
     access_token: Annotated[str | None, Cookie(alias=ACCESS_COOKIE)] = None,
 ) -> User:
@@ -45,6 +46,10 @@ async def get_current_user(
     user = await users_repo.get_by_id(session, user_id)
     if user is None or user.deleted_at is not None or user.is_active is False:
         raise UnauthorizedError("Пользователь недоступен", "USER_INACTIVE")
+
+    # Correlation for logs: id only, never name/email (no PII in logs).
+    request.state.user_id = str(user.id)
+    user_id_ctx.set(str(user.id))
     return user
 
 

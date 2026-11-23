@@ -112,3 +112,47 @@ uv run pytest
 
 `tests/test_stage4.py` покрывает продукт, загрузку/скачивание/удаление файлов,
 права, дубликаты, комментарии, чек-лист, админский CRUD и сквозной сценарий.
+
+## Этап 7: безопасность и наблюдаемость
+
+### Rate limit
+
+- Лимиты: вход 10/мин, регистрация 5/мин, проверка темы 30/мин, загрузка
+  20/мин; после 5 неверных паролей аккаунт блокируется на 15 минут (423).
+- `RATE_LIMIT_BACKEND=memory` — скользящее окно в процессе (dev, тесты).
+- `RATE_LIMIT_BACKEND=redis` — общий fixed-window счётчик для нескольких
+  uvicorn-воркеров. **Обязателен в prod** (проверяется в `Settings`).
+- Если Redis недоступен, лимитер логирует предупреждение и переходит в память
+  процесса (fail-open), чтобы сбой кэша не блокировал вход всем.
+
+### Логи
+
+`app/core/logging.py`:
+
+- prod — JSON-строка на запись: `time`, `level`, `logger`, `message`,
+  `request_id`, `user_id` (только id), `route`, `method`, `status`,
+  `duration_ms`; для фоновых задач — `task`, `count`.
+- dev — человекочитаемый формат.
+- Пароли, токены и тела запросов не логируются.
+
+### Метрики
+
+- `GET /api/v1/metrics` — Prometheus text format, вне OpenAPI.
+  `METRICS_ENABLED=false` отключает маршрут.
+- Метрики: `http_requests_total`, `http_request_duration_seconds`,
+  `db_pool_connections`, `background_job_runs_total`,
+  `background_job_failures_total`.
+- Маршруты нормализуются по шаблону (`/api/v1/teacher/projects/{project_id}`),
+  неизвестные — `unmatched`; число маршрутов ограничено.
+
+### Health
+
+- `GET /api/v1/healthz` — liveness.
+- `GET /api/v1/readyz` — проверка БД (503 при недоступности).
+
+### Тесты
+
+`tests/test_stage7.py`: security headers, `X-Request-ID`, метрики (включая
+отключение), rate limit на регистрации, Redis-лимитер и fail-open,
+JSON-формат логов.
+

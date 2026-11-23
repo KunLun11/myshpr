@@ -13,7 +13,8 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import bcrypt
-from jose import JWTError, jwt
+import jwt
+from jwt import InvalidTokenError
 
 from app.core.config import get_settings
 
@@ -76,7 +77,7 @@ def decode_token(token: str, *, expected_type: str) -> dict[str, Any]:
         payload: dict[str, Any] = jwt.decode(
             token, get_settings().JWT_SECRET, algorithms=[JWT_ALGORITHM]
         )
-    except JWTError as exc:  # expired, malformed or badly signed
+    except InvalidTokenError as exc:  # expired, malformed or badly signed
         raise TokenError("Invalid or expired token") from exc
 
     if payload.get("type") != expected_type:

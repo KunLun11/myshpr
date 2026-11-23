@@ -53,5 +53,16 @@ def test_prod_accepts_strong_config() -> None:
         ENV="prod",
         DATABASE_URL="postgresql+asyncpg://app:strongpass@db:5432/x",
         JWT_SECRET="x" * 40,
+        RATE_LIMIT_BACKEND="redis",
     )
     assert settings.ENV == "prod"
+
+
+def test_prod_requires_redis_rate_limit() -> None:
+    with pytest.raises(ValidationError):
+        Settings(
+            _env_file=None,
+            ENV="prod",
+            DATABASE_URL="postgresql+asyncpg://app:strongpass@db:5432/x",
+            JWT_SECRET="x" * 40,
+        )

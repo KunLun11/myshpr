@@ -5,6 +5,7 @@ notification dedupe keys prevent duplicates.
 """
 
 from app.core.logging import get_logger
+from app.core.metrics import registry
 from app.db.session import async_session_factory, engine
 from app.services.reminders import run_daily_reminders
 
@@ -12,12 +13,19 @@ logger = get_logger(__name__)
 
 
 async def daily_reminders(ctx: dict) -> dict:
-    async with async_session_factory() as session:
-        result = await run_daily_reminders(session)
+    try:
+        async with async_session_factory() as session:
+            result = await run_daily_reminders(session)
+    except Exception:
+        registry.record_background("daily_reminders", ok=False)
+        logger.exception("daily_reminders failed", extra={"task": "daily_reminders"})
+        raise
+    registry.record_background("daily_reminders", ok=True)
     logger.info(
         "daily_reminders finished: created=%s duplicates=%s",
         result.created,
         result.duplicates,
+        extra={"task": "daily_reminders", "count": result.created},
     )
     return {"created": result.created, "duplicates": result.duplicates}
 

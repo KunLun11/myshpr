@@ -42,6 +42,15 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
     BACKEND_URL: str = "http://localhost:8000"
 
+    # Rate limiting: ``memory`` is fine for a single process; ``redis`` shares
+    # counters across uvicorn workers and is required in multi-worker prod.
+    RATE_LIMIT_BACKEND: Literal["memory", "redis"] = "memory"
+
+    # Observability
+    METRICS_ENABLED: bool = True
+    # Emit ``Strict-Transport-Security`` (only meaningful behind HTTPS).
+    HSTS_ENABLED: bool = False
+
     # Auth (used starting from stage 2, validated now)
     JWT_SECRET: str
     ACCESS_TOKEN_TTL_MIN: int = 15
@@ -111,6 +120,8 @@ class Settings(BaseSettings):
                 raise ValueError("Default database password is not allowed in production")
             if self.STORAGE_BACKEND == "s3" and not (self.S3_BUCKET and self.S3_ENDPOINT):
                 raise ValueError("S3 storage requires S3_ENDPOINT and S3_BUCKET")
+            if self.RATE_LIMIT_BACKEND != "redis":
+                raise ValueError("Production runs multiple workers; set RATE_LIMIT_BACKEND=redis")
         if not self.DATABASE_URL:
             raise ValueError("DATABASE_URL is required")
         if not self.JWT_SECRET:

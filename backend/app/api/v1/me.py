@@ -54,7 +54,7 @@ async def check_topic(
     user: Student,
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> TopicCheckOut:
-    enforce_rate_limit(topic_check_limiter, str(user.id))
+    await enforce_rate_limit(topic_check_limiter, str(user.id))
     return await topics_service.check_my_topic(session, user, payload)
 
 
@@ -115,7 +115,7 @@ async def upload_file(
     file: Annotated[UploadFile, File()],
     kind: Annotated[FileKind, Form()] = FileKind.FINAL_WORK,
 ) -> ProjectFileOut:
-    enforce_rate_limit(upload_limiter, str(user.id))
+    await enforce_rate_limit(upload_limiter, str(user.id))
     return await files_service.upload_file(session, user, file, kind=kind)
 
 
