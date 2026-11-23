@@ -426,6 +426,60 @@ p {
 }
 
 /* ------------------------------------------------------------------ */
+/* Jelly nav pills                                                     */
+/* ------------------------------------------------------------------ */
+
+.nav-pill {
+  position: relative;
+  isolation: isolate;
+  transition:
+    color var(--motion-fast) var(--motion-ease-out),
+    transform var(--motion-base) var(--motion-spring);
+}
+
+/* The jelly itself: a soft accent blob that wobbles in under the label. */
+.nav-pill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--primary-soft);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+  opacity: 0;
+  transform: scale(0.7);
+  transition:
+    opacity var(--motion-fast) var(--motion-ease-out),
+    transform var(--motion-base) var(--motion-spring);
+}
+
+@media (hover: hover) {
+  .nav-pill:hover {
+    transform: translateY(-1px);
+  }
+
+  .nav-pill:hover::before {
+    opacity: 1;
+    transform: scale(1);
+    animation: jelly-pop 420ms var(--motion-spring) both;
+  }
+}
+
+.nav-pill:focus-visible::before {
+  opacity: 1;
+  transform: scale(1);
+  animation: jelly-pop 420ms var(--motion-spring) both;
+}
+
+.nav-pill:active {
+  transform: scale(0.95);
+}
+
+.nav-pill--active::before {
+  content: none;
+}
+
+/* ------------------------------------------------------------------ */
 /* Decorative sky                                                      */
 /* ------------------------------------------------------------------ */
 
@@ -1065,6 +1119,21 @@ p {
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+@keyframes jelly-pop {
+  0% {
+    transform: scale3d(0.72, 0.72, 1);
+  }
+  50% {
+    transform: scale3d(1.06, 0.93, 1);
+  }
+  72% {
+    transform: scale3d(0.97, 1.03, 1);
+  }
+  100% {
+    transform: scale3d(1, 1, 1);
   }
 }
 

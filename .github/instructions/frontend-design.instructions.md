@@ -23,7 +23,7 @@ applyTo: "frontend/**/*.{ts,tsx,css}"
   (`frontend/app/globals.css`). Не хардкодить значения в компонентах.
 - Эффекты — только из системы: `.glass`, `.glass-strong`, `.glass-card`,
   `.glass-sky`, `.bg-primary-gradient`, `.bg-sky-gradient`, `.text-gradient`,
-  `.hover-lift`, `.stagger-list`, `.animate-fade-up`, `.animate-pop-in`,
+  `.hover-lift`, `.nav-pill`, `.stagger-list`, `.animate-fade-up`, `.animate-pop-in`,
   `.float-slow`, `.theme-toggle`, `.sky-backdrop`.
 - Статус проекта никогда не передаётся одним цветом: всегда цвет + иконка + текст.
 - Моушн: 140–220ms для микро, 240–360ms для панелей, spring/ease-out.

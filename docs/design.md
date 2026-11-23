@@ -49,7 +49,8 @@
 - `.sky-backdrop` — фиксированные авроры в обеих темах и звёздное поле ночью.
 - `.bg-primary-gradient`, `.bg-sky-gradient`, `.text-gradient` — фирменные градиенты.
 - `.hover-lift`, `.stagger-list`, `.animate-fade-up`, `.animate-pop-in`,
-  `.float-slow` — библиотека моушна.
+  `.float-slow`, `.nav-pill` — библиотека моушна. `.nav-pill` даёт «желейную»
+  заливку пункта навигации при наведении и нажатии.
 - Переключатель тем — `components/theme-toggle.tsx`: `data-theme="light|dark"`
   на `<html>`, выбор сохраняется в `localStorage`, до первой отрисовки тема
   применяется inline-скриптом в `app/layout.tsx`.
