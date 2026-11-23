@@ -102,6 +102,8 @@ BROADNESS_CASES = [
     ("Анализ цен на школьные обеды в столовой за месяц", "warn"),
     ("Изучение микроклимата в кабинете биологии с помощью датчиков Arduino", "warn"),
     ("Влияние громкой музыки на внимание школьников", "warn"),
+    ("Влияние шума в школьной столовой на внимание учеников", "warn"),
+    ("Влияние гаджетов на сон человека", "block"),
     ("Особенности питания подростков в школьной столовой", "warn"),
     ("Сравнение качества воды в реке Москве за 2024 год", "ok"),
     ("Разработка приложения на Python для расписания школьников", "ok"),
@@ -119,6 +121,24 @@ def test_broadness_levels(title: str, expected_level: str) -> None:
 
 def test_hard_block_sets_zero_score() -> None:
     assert analyze_broadness("Экология").score == 0
+
+
+def test_broadness_reason_shows_full_word_not_stem() -> None:
+    result = analyze_broadness("Влияние шума в школьной столовой на внимание учеников")
+    assert any("«влияние»" in reason for reason in result.reasons)
+    assert all("«влияни»" not in reason for reason in result.reasons)
+
+
+def test_broadness_ignores_stems_inside_words() -> None:
+    # «человека» содержит «век», «погода» — «год»: это не сужение по периоду.
+    assert analyze_broadness("Влияние гаджетов на сон человека").level == "block"
+
+
+def test_broadness_suggests_relevant_missing_narrowing() -> None:
+    result = analyze_broadness("Влияние шума в школьной столовой на внимание учеников")
+    assert result.level == "warn"
+    assert "Укажите период или год." in result.suggestions
+    assert all("технологию" not in suggestion for suggestion in result.suggestions)
 
 
 def test_ok_title_has_suggestions_or_no_reasons() -> None:

@@ -108,7 +108,7 @@ NARROWING_SIGNALS: dict[str, tuple[str, ...]] = {
     "comparison": (
         "сравнен",
         "по сравнению",
-        " vs ",
+        "vs",
         "лучше",
         "эффективн",
         "дешевле",
@@ -136,6 +136,9 @@ NARROWING_HINTS = {
     "comparison": "Добавьте сравнение: с чем именно сравниваете.",
     "method": "Укажите метод: опрос, эксперимент, измерение.",
 }
+
+# Order used when we offer only the most useful missing narrowings.
+SUGGESTION_ORDER = ("place", "period", "group", "method", "comparison", "technology")
 
 BREADTH_WORDS = (
     "влияни",
@@ -220,8 +223,32 @@ def word_count(text: str) -> int:
     return len(normalized.split()) if normalized else 0
 
 
-def _contains(text: str, stems: tuple[str, ...]) -> bool:
-    return any(stem in text for stem in stems)
+def _stem_matches_word(word: str, stem: str) -> bool:
+    """A stem matches only the beginning of a whole word (``школ`` -> ``школьной``).
+
+    Plain substring search gave false positives: ``человек`` matched ``век``
+    (period) and ``погода`` matched ``год``.
+    """
+    if " " in stem:
+        return False
+    return word.startswith(stem)
+
+
+def _stem_matches_text(words: list[str], stem: str) -> bool:
+    if " " in stem:
+        return f" {stem} " in f" {' '.join(words)} "
+    return any(_stem_matches_word(word, stem) for word in words)
+
+
+def _contains_words(words: list[str], stems: tuple[str, ...]) -> bool:
+    return any(_stem_matches_text(words, stem) for stem in stems)
+
+
+def _first_word_for_stem(words: list[str], stem: str) -> str | None:
+    """Return the actual word from the title that hit the stem."""
+    if " " in stem:
+        return stem if f" {stem} " in f" {' '.join(words)} " else None
+    return next((word for word in words if _stem_matches_word(word, stem)), None)
 
 
 def validate_title(title: str, *, interest_area_name: str | None = None) -> list[CheckMessage]:
@@ -371,17 +398,23 @@ def analyze_broadness(
         reasons.append("Исследовательский вопрос не называет конкретный объект.")
 
     found_signals = [
-        name for name, stems in NARROWING_SIGNALS.items() if _contains(normalized, stems)
+        name for name, stems in NARROWING_SIGNALS.items() if _contains_words(words, stems)
     ]
-    matched_breadth = [stem for stem in BREADTH_WORDS if stem in normalized]
+    matched_breadth = [
+        (stem, word)
+        for stem in BREADTH_WORDS
+        if (word := _first_word_for_stem(words, stem)) is not None
+    ]
 
     score = 50 + 10 * len(found_signals) - 15 * len(matched_breadth)
     score = max(0, min(100, score))
     if hard_block:
         score = 0
 
-    for stem in matched_breadth:
-        reasons.append(f"Слишком общее слово: «{stem}». Замените его на конкретный предмет.")
+    for _stem, word in matched_breadth:
+        reasons.append(
+            f"Слишком общее слово «{word}» — уточните объект и что именно вы исследуете."
+        )
 
     if not found_signals:
         reasons.append(
@@ -395,7 +428,7 @@ def analyze_broadness(
             )
         )
     else:
-        missing = [NARROWING_HINTS[name] for name in NARROWING_SIGNALS if name not in found_signals]
+        missing = [NARROWING_HINTS[name] for name in SUGGESTION_ORDER if name not in found_signals]
         suggestions.extend(missing[:2])
 
     if hard_block:
