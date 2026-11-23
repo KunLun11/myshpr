@@ -1,0 +1,83 @@
+name: E2E
+
+# Nightly Playwright run against the real stack (T7.1). Also runnable by hand.
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: e2e
+  cancel-in-progress: false
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare backend env for compose
+        run: |
+          cp backend/.env.example backend/.env
+          sed -i 's#@localhost:5432#@db:5432#' backend/.env
+          sed -i 's#redis://localhost:6379#redis://redis:6379#' backend/.env
+
+      - name: Start stack
+        run: docker compose -f deploy/docker-compose.yml up -d --build
+
+      - name: Wait for Postgres, backend and frontend
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://localhost:8000/api/v1/healthz >/dev/null \
+              && curl -fsS http://localhost:3000/login >/dev/null; then
+              echo "stack is up"; exit 0
+            fi
+            sleep 5
+          done
+          echo "stack did not become healthy" >&2
+          docker compose -f deploy/docker-compose.yml ps
+          exit 1
+
+      - name: Migrate and seed
+        run: |
+          docker compose -f deploy/docker-compose.yml exec -T backend \
+            uv run alembic upgrade head
+          docker compose -f deploy/docker-compose.yml exec -T backend \
+            uv run python -m app.db.seed --dev
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install test dependencies
+        working-directory: frontend
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run Playwright scenarios
+        working-directory: frontend
+        env:
+          E2E_BASE_URL: http://localhost:3000
+        run: npx playwright test
+
+      - name: Upload traces and reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            frontend/playwright-report
+            frontend/e2e-results
+          retention-days: 14
+
+      - name: Stack logs
+        if: failure()
+        run: docker compose -f deploy/docker-compose.yml logs --no-color --tail=400
+
+      - name: Stop stack
+        if: always()
+        run: docker compose -f deploy/docker-compose.yml down -v
