@@ -1,0 +1,93 @@
+# Prometheus alert rules for the MVP pilot (T7.3).
+#
+# Load with:
+#   rule_files:
+#     - /etc/prometheus/rules/my-school-project.yml
+#
+# Scrape the backend from the private network, e.g.:
+#   - job_name: my-school-project-backend
+#     metrics_path: /api/v1/metrics
+#     static_configs:
+#       - targets: ["backend:8000"]
+#
+# Each container is a separate target (multi-worker); aggregate with `sum`.
+
+groups:
+  - name: my-school-project-availability
+    rules:
+      - alert: BackendDown
+        expr: up{job="my-school-project-backend"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend недоступен"
+          description: "Prometheus не может скрейпить backend дольше 2 минут."
+
+      - alert: ReadinessFailing
+        expr: probe_success{job="my-school-project-readyz"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Readiness /api/v1/readyz падает"
+          description: "Проверьте Postgres и пул соединений."
+
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m]))
+            /
+          clamp_min(sum(rate(http_requests_total[5m])), 0.001)
+            > 0.02
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Доля 5xx выше 2% за 5 минут"
+          description: "Смотрите логи по request_id и последний деплой."
+
+      - alert: SlowRequests
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (rate(http_request_duration_seconds_bucket[5m]))
+          ) > 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p95 задержки выше 2 секунд"
+          description: "Проверьте БД, пул соединений и внешнее хранилище файлов."
+
+  - name: my-school-project-background
+    rules:
+      - alert: BackgroundJobFailures
+        expr: increase(background_job_failures_total[1h]) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Фоновая задача завершилась ошибкой"
+          description: "Задача {{ $labels.task }}: смотрите логи worker."
+
+      - alert: BackgroundJobMissing
+        expr: increase(background_job_runs_total{task="daily_reminders"}[26h]) == 0
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Ежедневные напоминания не запускались 26 часов"
+          description: "Проверьте ARQ worker и cron."
+
+  - name: my-school-project-infrastructure
+    rules:
+      - alert: DatabasePoolExhausted
+        expr: |
+          max(db_pool_connections{state="checked_out"})
+            >= max(db_pool_connections{state="size"})
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Пул соединений БД исчерпан"
+          description: "Рост нагрузки или утечка сессий; проверьте медленные запросы."

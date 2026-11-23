@@ -1,0 +1,33 @@
+# Reverse proxy and TLS terminator for the prod compose stack (T7.4).
+#
+# Caddy obtains and renews certificates automatically. Set DOMAIN and
+# ACME_EMAIL in deploy/.env; for a pilot behind a school network you can also
+# use a private CA or an upstream platform ingress and skip this service.
+#
+# Every request goes to Next.js, which serves the UI and proxies
+# /api/backend/* to FastAPI (same-origin BFF, ADR-03). FastAPI is never
+# published directly.
+
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# Metrics are scraped from the private network only, never through TLS.
+	@metrics path /api/v1/metrics /api/backend/metrics
+	respond @metrics 404
+
+	reverse_proxy frontend:3000 {
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Real-IP {remote_host}
+	}
+}
