@@ -14,6 +14,8 @@ CMD ["npm", "run", "dev"]
 
 # prod
 FROM base AS build
+ARG BACKEND_URL=http://backend:8000
+ENV BACKEND_URL=${BACKEND_URL}
 COPY . .
 RUN --mount=type=cache,target=/app/.next/cache \
     npm run build
