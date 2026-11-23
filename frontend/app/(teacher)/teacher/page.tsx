@@ -3,7 +3,7 @@ import { ArrowRight, ClipboardCheck, Users } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 
-import { InvitePanel } from "@/components/invite-panel";
+import { ProjectStatusBadge } from "@/components/project-status-badge";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -12,9 +12,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { requireUser } from "@/lib/auth";
 import { className } from "@/lib/format";
 import { serverApiGet } from "@/lib/server-api";
-import type { ClassSummary, Submission } from "@/types/api";
+import type { Submission, TeacherStudent } from "@/types/api";
 
-export const metadata: Metadata = { title: "Мои классы" };
+export const metadata: Metadata = { title: "Мои ученики" };
 
 export default function TeacherPage() {
   return (
@@ -27,11 +27,11 @@ export default function TeacherPage() {
         <div className="relative space-y-3">
           <Badge variant="secondary">Кабинет учителя</Badge>
           <h1 className="text-3xl leading-tight sm:text-4xl">
-            Мои <span className="text-gradient">классы</span>
+            Мои <span className="text-gradient">ученики</span>
           </h1>
           <p className="max-w-[70ch] text-[var(--muted-foreground)]">
-            Классы, где вы куратор. Код приглашения даёт ученику возможность
-            зарегистрироваться и попасть в класс.
+            Дети из всех ваших классов. В карточке видно, в каком классе учится
+            ученик и на каком этапе его проект.
           </p>
         </div>
       </header>
@@ -40,8 +40,8 @@ export default function TeacherPage() {
         <ReviewQueueCard />
       </Suspense>
 
-      <Suspense fallback={<ClassesSkeleton />}>
-        <TeacherClasses />
+      <Suspense fallback={<StudentsSkeleton />}>
+        <TeacherStudents />
       </Suspense>
     </div>
   );
@@ -93,21 +93,21 @@ async function ReviewQueueCard() {
   );
 }
 
-async function TeacherClasses() {
+async function TeacherStudents() {
   await requireUser();
-  const classes = await serverApiGet<ClassSummary[]>("/teacher/classes");
+  const students = await serverApiGet<TeacherStudent[]>("/teacher/students");
 
-  if (classes === null) {
-    return <Alert>Не удалось загрузить классы. Обновите страницу или войдите заново.</Alert>;
+  if (students === null) {
+    return <Alert>Не удалось загрузить учеников. Обновите страницу или войдите заново.</Alert>;
   }
 
-  if (classes.length === 0) {
+  if (students.length === 0) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Пока нет классов</CardTitle>
+          <CardTitle>Пока нет учеников</CardTitle>
           <CardDescription>
-            Администратор школы назначит вас куратором — и классы появятся здесь.
+            Администратор школы назначит вас куратором класса — и ученики появятся здесь.
           </CardDescription>
         </CardHeader>
         <CardContent />
@@ -116,28 +116,48 @@ async function TeacherClasses() {
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      {classes.map((item) => (
-        <Card key={item.id} interactive>
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {students.map((student) => (
+        <Card key={student.user_id}>
           <CardHeader>
-            <div className="flex items-center justify-between gap-3">
-              <CardTitle>{className(item)}</CardTitle>
-              <Badge variant="secondary">{item.academic_year_name ?? "Текущий год"}</Badge>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="space-y-1">
+                <CardTitle className="text-lg">{student.full_name}</CardTitle>
+                <CardDescription className="flex flex-wrap items-center gap-2">
+                  <Users className="size-4" aria-hidden="true" />
+                  <span className="font-medium text-[var(--foreground)]">
+                    {className({ grade: student.class_grade, label: student.class_label })}
+                  </span>
+                  <span aria-hidden="true">·</span>
+                  {student.academic_year_name ?? "Текущий год"}
+                </CardDescription>
+              </div>
+              {student.project_status ? (
+                <ProjectStatusBadge status={student.project_status} />
+              ) : (
+                <Badge variant="secondary">Проект не начат</Badge>
+              )}
             </div>
-            <CardDescription className="flex items-center gap-2">
-              <Users className="size-4" aria-hidden="true" />
-              {item.students_count} учеников
-            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Link
-              href={`/teacher/classes/${item.id}`}
-              className={buttonVariants({ size: "sm" })}
-            >
-              Дашборд класса
-              <ArrowRight aria-hidden="true" />
-            </Link>
-            <InvitePanel classId={item.id} />
+            <p className="text-sm text-[var(--muted-foreground)]">{student.email}</p>
+            <div className="flex flex-wrap gap-2">
+              {student.project_id ? (
+                <Link
+                  href={`/teacher/projects/${student.project_id}`}
+                  className={buttonVariants({ size: "sm" })}
+                >
+                  Открыть проект
+                  <ArrowRight aria-hidden="true" />
+                </Link>
+              ) : null}
+              <Link
+                href={`/teacher/classes/${student.class_id}`}
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+              >
+                Дашборд класса
+              </Link>
+            </div>
           </CardContent>
         </Card>
       ))}
@@ -145,9 +165,10 @@ async function TeacherClasses() {
   );
 }
 
-function ClassesSkeleton() {
+function StudentsSkeleton() {
   return (
-    <div aria-busy="true" aria-live="polite" className="grid gap-4 sm:grid-cols-2">
+    <div aria-busy="true" aria-live="polite" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <Skeleton className="h-56 w-full" />
       <Skeleton className="h-56 w-full" />
       <Skeleton className="h-56 w-full" />
     </div>

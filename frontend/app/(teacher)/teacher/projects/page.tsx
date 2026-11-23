@@ -63,7 +63,7 @@ async function ProjectsContent() {
         </CardHeader>
         <CardContent>
           <Link href="/teacher" className={buttonVariants({ variant: "outline" })}>
-            Вернуться к классам
+            Вернуться к ученикам
           </Link>
         </CardContent>
       </Card>

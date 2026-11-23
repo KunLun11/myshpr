@@ -230,6 +230,56 @@ async def test_dashboard_denies_foreign_teacher(session, client) -> None:
     assert response.json()["code"] == "CLASS_ACCESS_DENIED"
 
 
+async def test_teacher_students_roster_has_class_and_project(session, client) -> None:
+    school = await create_school(session)
+    year = await create_year(session, school, is_current=True)
+    teacher = await create_user(
+        session, school, UserRole.TEACHER, email="roster@example.com", password="password123"
+    )
+    other_teacher = await create_user(
+        session, school, UserRole.TEACHER, email="other.roster@example.com", password="password123"
+    )
+    first_class = await create_class(session, school, year, label="9А", curator_id=teacher.id)
+    second_class = await create_class(session, school, year, label="9Б", curator_id=teacher.id)
+    foreign_class = await create_class(
+        session, school, year, label="9В", curator_id=other_teacher.id
+    )
+    anna = await create_student(
+        session, school, first_class, full_name="Анна Смирнова", email="anna@example.com"
+    )
+    ivan = await create_student(
+        session, school, second_class, full_name="Иван Петров", email="ivan@example.com"
+    )
+    await create_student(
+        session, school, foreign_class, full_name="Чужой Ученик", email="foreign@example.com"
+    )
+    project = await create_project(
+        session, anna, year, first_class, status=ProjectStatus.IN_PROGRESS
+    )
+
+    await _login(client, teacher.email)
+    response = await client.get("/api/v1/teacher/students")
+    assert response.status_code == 200, response.text
+    body = response.json()
+
+    assert [item["full_name"] for item in body] == ["Анна Смирнова", "Иван Петров"]
+    assert body[0]["class_id"] == str(first_class.id)
+    assert body[0]["class_label"] == "9А"
+    assert body[0]["class_grade"] == 9
+    assert body[0]["academic_year_name"] == year.name
+    assert body[0]["project_id"] == str(project.id)
+    assert body[0]["project_status"] == "in_progress"
+    assert body[1]["class_label"] == "9Б"
+    assert body[1]["project_id"] is None
+    assert body[1]["project_status"] is None
+    assert str(ivan.id) == body[1]["user_id"]
+
+    await _login(client, other_teacher.email)
+    foreign = await client.get("/api/v1/teacher/students")
+    assert foreign.status_code == 200
+    assert [item["full_name"] for item in foreign.json()] == ["Чужой Ученик"]
+
+
 async def test_checkpoint_crud_validation_and_student_next_point(session, client) -> None:
     school, year, _, _, admin, _, student, _, project, _ = await _setup(session)
     await _login(client, admin.email)

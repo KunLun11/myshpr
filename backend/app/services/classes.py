@@ -12,7 +12,7 @@ from app.models import AcademicYear, ClassInvite, SchoolClass, User
 from app.models.enums import UserRole
 from app.repositories import classes as classes_repo
 from app.repositories.classes import ClassRow
-from app.schemas.classes import ClassOut, InviteCreateRequest, InviteOut
+from app.schemas.classes import ClassOut, InviteCreateRequest, InviteOut, TeacherStudentOut
 
 # No 0/O/1/I to keep codes easy to dictate in a classroom.
 INVITE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -30,6 +30,26 @@ def serialize_class(row: ClassRow) -> ClassOut:
         curator_id=row.school_class.curator_id,
         students_count=row.students_count,
     )
+
+
+async def list_teacher_students(
+    session: AsyncSession, teacher_id: uuid.UUID
+) -> list[TeacherStudentOut]:
+    rows = await classes_repo.list_teacher_students(session, teacher_id)
+    return [
+        TeacherStudentOut(
+            user_id=row.user_id,
+            full_name=row.full_name,
+            email=row.email,
+            class_id=row.class_id,
+            class_label=row.class_label,
+            class_grade=row.class_grade,
+            academic_year_name=row.academic_year_name,
+            project_id=row.project_id,
+            project_status=row.project_status,
+        )
+        for row in rows
+    ]
 
 
 async def create_class(

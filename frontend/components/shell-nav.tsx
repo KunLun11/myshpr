@@ -21,8 +21,8 @@ const NAV: Record<UserRole, NavItem[]> = {
     { href: "/cabinet/work", label: "Работа" },
   ],
   teacher: [
-    { href: "/teacher", label: "Классы" },
-    { href: "/teacher/projects", label: "Ученики" },
+    { href: "/teacher", label: "Ученики" },
+    { href: "/teacher/projects", label: "Проекты" },
     { href: "/teacher/submissions", label: "Проверка тем" },
     { href: "/teacher/topics", label: "Реестр" },
   ],

@@ -15,7 +15,7 @@ from app.schemas.checklist import (
     ChecklistOut,
     ChecklistVerifyRequest,
 )
-from app.schemas.classes import ClassOut
+from app.schemas.classes import ClassOut, TeacherStudentOut
 from app.schemas.comment import CommentCreateRequest, CommentOut, CommentUpdateRequest
 from app.schemas.dashboard import ClassDashboardOut
 from app.schemas.file import ProjectFileOut
@@ -32,6 +32,7 @@ from app.services import dashboard as dashboard_service
 from app.services import files as files_service
 from app.services import project_cards
 from app.services import topics as topics_service
+from app.services.classes import list_teacher_students as list_teacher_students_service
 from app.services.classes import serialize_class
 
 router = APIRouter(prefix="/teacher", tags=["teacher"])
@@ -47,6 +48,14 @@ async def my_classes(
 ) -> list[ClassOut]:
     rows = await classes_repo.list_teacher_classes(session, user.id)
     return [serialize_class(row) for row in rows]
+
+
+@router.get("/students", response_model=list[TeacherStudentOut], summary="Мои ученики")
+async def my_students(
+    user: Teacher,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> list[TeacherStudentOut]:
+    return await list_teacher_students_service(session, user.id)
 
 
 @router.get(

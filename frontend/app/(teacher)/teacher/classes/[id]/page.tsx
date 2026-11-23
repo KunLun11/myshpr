@@ -47,7 +47,7 @@ async function DashboardContent({ params }: PageProps) {
     <div className="space-y-6">
       <header className="space-y-2">
         <Link href="/teacher" className="text-sm text-[var(--muted-foreground)]">
-          ← Мои классы
+          ← Мои ученики
         </Link>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-1">

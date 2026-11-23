@@ -6,7 +6,14 @@ from dataclasses import dataclass
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import AcademicYear, ClassInvite, SchoolClass, StudentProfile, User
+from app.models import (
+    AcademicYear,
+    ClassInvite,
+    Project,
+    SchoolClass,
+    StudentProfile,
+    User,
+)
 
 
 @dataclass(slots=True)
@@ -14,6 +21,21 @@ class ClassRow:
     school_class: SchoolClass
     academic_year_name: str | None
     students_count: int
+
+
+@dataclass(slots=True)
+class TeacherStudentRow:
+    """Student joined with class/year and the current project, if any."""
+
+    user_id: uuid.UUID
+    full_name: str
+    email: str
+    class_id: uuid.UUID
+    class_label: str
+    class_grade: int
+    academic_year_name: str | None
+    project_id: uuid.UUID | None
+    project_status: str | None
 
 
 async def get_by_id(session: AsyncSession, class_id: uuid.UUID) -> SchoolClass | None:
@@ -103,6 +125,50 @@ async def list_class_students(
         .order_by(User.full_name)
     )
     return [(row[0], row[1], row[2], row[3]) for row in result.all()]
+
+
+async def list_teacher_students(
+    session: AsyncSession, teacher_id: uuid.UUID
+) -> list[TeacherStudentRow]:
+    """Students across every class curated by the teacher, with class info."""
+    result = await session.execute(
+        select(
+            User.id,
+            User.full_name,
+            User.email,
+            SchoolClass.id,
+            SchoolClass.label,
+            SchoolClass.grade,
+            AcademicYear.name,
+            Project.id,
+            Project.status,
+        )
+        .join(StudentProfile, StudentProfile.user_id == User.id)
+        .join(SchoolClass, SchoolClass.id == StudentProfile.class_id)
+        .join(AcademicYear, AcademicYear.id == SchoolClass.academic_year_id)
+        .outerjoin(
+            Project,
+            (Project.student_id == User.id)
+            & (Project.class_id == SchoolClass.id)
+            & (Project.academic_year_id == SchoolClass.academic_year_id),
+        )
+        .where(SchoolClass.curator_id == teacher_id, User.deleted_at.is_(None))
+        .order_by(SchoolClass.grade, SchoolClass.label, User.full_name)
+    )
+    return [
+        TeacherStudentRow(
+            user_id=row[0],
+            full_name=row[1],
+            email=row[2],
+            class_id=row[3],
+            class_label=row[4],
+            class_grade=row[5],
+            academic_year_name=row[6],
+            project_id=row[7],
+            project_status=row[8].value if row[8] is not None else None,
+        )
+        for row in result.all()
+    ]
 
 
 # --- Stage 5: reminder job lookups -----------------------------------------

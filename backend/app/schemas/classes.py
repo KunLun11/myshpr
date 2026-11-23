@@ -30,6 +30,20 @@ class StudentOut(BaseModel):
     class_id: UUID
 
 
+class TeacherStudentOut(BaseModel):
+    """A student in one of the teacher's classes (roster card)."""
+
+    user_id: UUID
+    full_name: str
+    email: EmailStr
+    class_id: UUID
+    class_label: str
+    class_grade: int
+    academic_year_name: str | None = None
+    project_id: UUID | None = None
+    project_status: str | None = None
+
+
 class InviteCreateRequest(BaseModel):
     max_uses: int | None = Field(default=None, ge=1, le=1000)
     expires_in_days: int = Field(default=14, ge=1, le=90)

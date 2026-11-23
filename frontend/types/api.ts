@@ -41,6 +41,18 @@ export interface StudentSummary {
   class_id: string;
 }
 
+export interface TeacherStudent {
+  user_id: string;
+  full_name: string;
+  email: string;
+  class_id: string;
+  class_label: string;
+  class_grade: number;
+  academic_year_name: string | null;
+  project_id: string | null;
+  project_status: ProjectStatus | null;
+}
+
 export interface Invite {
   id: string;
   code: string;
