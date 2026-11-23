@@ -7,6 +7,7 @@ The app intentionally fails at startup when critical variables are missing.
 from functools import lru_cache
 from pathlib import Path
 from typing import Annotated, Literal
+from urllib.parse import unquote, urlsplit
 
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
@@ -116,7 +117,12 @@ class Settings(BaseSettings):
         if self.ENV == "prod":
             if not self.JWT_SECRET or len(self.JWT_SECRET) < 32:
                 raise ValueError("JWT_SECRET must be at least 32 characters in production")
-            if "myschoolproject" in self.DATABASE_URL:
+            if "CHANGE-ME" in self.JWT_SECRET:
+                raise ValueError("JWT_SECRET still contains the example placeholder")
+            # Compare the password only: the role and database name may
+            # legitimately stay "myschoolproject".
+            db_password = unquote(urlsplit(self.DATABASE_URL).password or "")
+            if db_password in {"", "myschoolproject"} or "CHANGE-ME" in db_password:
                 raise ValueError("Default database password is not allowed in production")
             if self.STORAGE_BACKEND == "s3" and not (self.S3_BUCKET and self.S3_ENDPOINT):
                 raise ValueError("S3 storage requires S3_ENDPOINT and S3_BUCKET")

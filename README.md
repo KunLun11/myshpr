@@ -16,7 +16,7 @@ MVP покрывает четыре функции:
 ## Стек
 
 | Слой | Технологии |
-|---|---|
+| --- | --- |
 | Backend | Python 3.13, FastAPI, SQLAlchemy 2.0 async, Alembic, asyncpg, ARQ |
 | Frontend | Next.js 16 (App Router, Cache Components), React 19, Tailwind 4 |
 | Данные | PostgreSQL 16, Redis 7 |
@@ -40,7 +40,7 @@ docker compose -f deploy/docker-compose.yml exec backend uv run python -m app.db
 Откройте <http://localhost:3000>.
 
 | Роль | Логин | Пароль |
-|---|---|---|
+| --- | --- | --- |
 | Учитель | `teacher@example.com` | `student123` |
 | Ученик | `student1@example.com` | `student123` |
 | Код класса | `DEMO2026` | — |
@@ -65,8 +65,10 @@ npm ci
 BACKEND_URL=http://localhost:8000 npm run dev
 ```
 
-`backend/.env` — единственный источник настроек backend; шаблон и комментарии
-в `backend/.env.example`.
+`backend/.env` — источник настроек backend при локальном запуске и dev compose.
+В prod-стеке настройки живут в `deploy/.env` (backend читает их из окружения,
+файл `backend/.env` на сервере не обязателен). Шаблоны и полный справочник
+переменных — `backend/.env.example`, `deploy/.env.example` и `docs/env.md`.
 
 ## Тесты и проверки
 
@@ -110,11 +112,12 @@ openspec/   спецификации изменений
 ## Документация
 
 | Документ | О чём |
-|---|---|
+| --- | --- |
 | `TASKS.md` | продукт, доменная модель, этапы и критерии приёмки |
 | `docs/domain.md` | сущности и правила |
 | `docs/design.md` | дизайн-система и бриф |
 | `docs/runbook.md` | эксплуатация: деплой, бэкапы, инциденты |
+| `docs/env.md` | все переменные окружения для dev и сервера |
 | `docs/guides/student.md` | инструкция ученика |
 | `docs/guides/teacher.md` | инструкция учителя |
 | `docs/adr/` | архитектурные решения |

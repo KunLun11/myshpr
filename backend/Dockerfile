@@ -16,8 +16,9 @@ CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "800
 
 # prod
 FROM base AS prod
+# `s3` extra installs aioboto3: without it STORAGE_BACKEND=s3 fails at runtime.
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev
+    uv sync --frozen --no-dev --extra s3
 COPY . .
 EXPOSE 8000
 # Call the venv binary directly so `uv run` never re-syncs dev dependencies.

@@ -48,8 +48,14 @@ else
 fi
 
 echo "==> Checksums"
-( cd "${BACKUP_DIR}" && sha256sum db-"${TS}".dump media-"${TS}".tgz 2>/dev/null \
-  > "SHA256SUMS-${TS}" || true )
+(
+  cd "${BACKUP_DIR}"
+  files=("db-${TS}.dump")
+  if [[ -f "media-${TS}.tgz" ]]; then
+    files+=("media-${TS}.tgz")
+  fi
+  sha256sum "${files[@]}" > "SHA256SUMS-${TS}"
+)
 
 echo "==> Retention (${BACKUP_KEEP_DAYS} days)"
 find "${BACKUP_DIR}" -maxdepth 1 -type f -mtime "+${BACKUP_KEEP_DAYS}" \

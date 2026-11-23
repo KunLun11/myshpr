@@ -44,7 +44,38 @@ def test_prod_rejects_default_db_password() -> None:
             ENV="prod",
             DATABASE_URL="postgresql+asyncpg://myschoolproject:myschoolproject@db:5432/x",
             JWT_SECRET="x" * 40,
+            RATE_LIMIT_BACKEND="redis",
         )
+
+
+def test_prod_rejects_placeholder_credentials() -> None:
+    with pytest.raises(ValidationError):
+        Settings(
+            _env_file=None,
+            ENV="prod",
+            DATABASE_URL="postgresql+asyncpg://myschoolproject:CHANGE-ME-DB@db:5432/x",
+            JWT_SECRET="x" * 40,
+            RATE_LIMIT_BACKEND="redis",
+        )
+    with pytest.raises(ValidationError):
+        Settings(
+            _env_file=None,
+            ENV="prod",
+            DATABASE_URL="postgresql+asyncpg://app:strongpass@db:5432/x",
+            JWT_SECRET="CHANGE-ME-AT-LEAST-32-CHARACTERS-LONG",
+            RATE_LIMIT_BACKEND="redis",
+        )
+
+
+def test_prod_allows_default_db_name_with_strong_password() -> None:
+    settings = Settings(
+        _env_file=None,
+        ENV="prod",
+        DATABASE_URL="postgresql+asyncpg://myschoolproject:s3cret-pass@db:5432/myschoolproject",
+        JWT_SECRET="x" * 40,
+        RATE_LIMIT_BACKEND="redis",
+    )
+    assert settings.ENV == "prod"
 
 
 def test_prod_accepts_strong_config() -> None:

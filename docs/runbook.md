@@ -6,7 +6,7 @@
 ## 1. Роли и доступ
 
 | Роль | Что может |
-|---|---|
+| --- | --- |
 | `super_admin` | Школы, учебные годы любой школы, глобальные справочники, аудит всех школ |
 | `school_admin` | Классы, приглашения, учебные годы и контрольные точки своей школы, чек-лист, ученики и импорт, аудит своей школы. Справочники — только чтение |
 | `teacher` | Свои классы, проверка тем, работа с проектами, дашборд |
@@ -36,7 +36,7 @@
 - В prod при пустом allowlist браузерные запросы с `Origin` отклоняются
   (fail closed), а `Sec-Fetch-Site: cross-site` отклоняется всегда.
 - Настройка: `CORS_ORIGINS` и `CSRF_TRUSTED_ORIGINS` в `backend/.env`
-  (comma-separated), например:
+  (локально) или `deploy/.env` (prod), comma-separated, например:
   `CSRF_TRUSTED_ORIGINS=https://project.school.example`.
 
 Cookies остаются `httpOnly`, `SameSite=Lax`, `Secure` в prod — это основная
@@ -151,6 +151,8 @@ docker compose -f deploy/docker-compose.prod.yml up -d --build
 BASE_URL=https://project.school.example deploy/scripts/smoke.sh
 ```
 
+Полный список переменных и правила заполнения — `docs/env.md`.
+
 Что делает compose:
 
 1. `migrate` применяет Alembic и завершается; backend и worker стартуют только
@@ -161,11 +163,13 @@ BASE_URL=https://project.school.example deploy/scripts/smoke.sh
 4. `media_data`, `pg_data`, `redis_data` и данные Caddy живут в именованных
    томах.
 
-Секреты только в `deploy/.env` (не в git, не в образе). Backend в prod
-отказывается стартовать, если:
+Секреты только в `deploy/.env` (не в git, не в образе). Файл `backend/.env`
+на сервере не обязателен: все рабочие значения прокидываются из `deploy/.env`.
+Backend в prod отказывается стартовать, если:
 
-- `JWT_SECRET` короче 32 символов;
-- в `DATABASE_URL` остался демо-пароль `myschoolproject`;
+- `JWT_SECRET` короче 32 символов или содержит заглушку `CHANGE-ME`;
+- в пароле из `DATABASE_URL` остался демо-пароль `myschoolproject` или заглушка
+  `CHANGE-ME`;
 - `RATE_LIMIT_BACKEND` не `redis`.
 
 ## 11. TLS и домен
@@ -204,7 +208,7 @@ BASE_URL=https://project.school.example deploy/scripts/smoke.sh
 ## 13. Инциденты
 
 | Симптом | Действия |
-|---|---|
+| --- | --- |
 | 5xx после деплоя | `smoke.sh`, логи backend по `request_id`, `docker compose ps`; при подтверждении — откат (ниже) |
 | Ученики не могут войти | проверить `/readyz`, Redis (`redis-cli -a ... ping`), `RATE_LIMITED` в логах; при сбое Redis лимитер падает в память процесса (fail-open) и продолжает работать |
 | Файлы не скачиваются | проверить `media_data`/S3, права роли, `Content-Disposition: attachment`; restore media из бэкапа |
@@ -219,4 +223,3 @@ BASE_URL=https://project.school.example deploy/scripts/smoke.sh
 3. Данные: `deploy/scripts/restore.sh <dump> --yes` (разрушительно, только
    осознанно).
 4. После отката — `smoke.sh` и запись в журнал инцидента.
-

@@ -41,7 +41,8 @@ P0-пункты закрыты для пилотной школы.
 
 ## 4. Деплой и данные
 
-- [ ] `deploy/.env` заполнен; `DOMAIN` резолвится на сервер.
+- [ ] `deploy/.env` заполнен по `docs/env.md`; `DOMAIN` резолвится на сервер.
+- [ ] `backend/.env` на сервере отсутствует или не содержит боевых секретов.
 - [ ] `docker compose -f deploy/docker-compose.prod.yml config` валиден.
 - [ ] `migrate` завершается до старта backend и worker.
 - [ ] Caddy выпустил сертификат; HTTP редиректит на HTTPS.
