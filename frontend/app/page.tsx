@@ -61,7 +61,10 @@ export default function Home() {
             продукт, а учителю — увидеть, кому нужна помощь.
           </p>
           <div className="flex flex-wrap gap-3">
-            <Link href="/register" className={buttonVariants({ size: "lg" })}>
+            <Link
+              href="/register"
+              className={buttonVariants({ variant: "brand", size: "lg" })}
+            >
               Начать
             </Link>
             <Link href="/login" className={buttonVariants({ variant: "outline", size: "lg" })}>

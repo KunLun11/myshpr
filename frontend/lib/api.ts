@@ -56,3 +56,60 @@ export const api = {
   patch: <T>(path: string, body?: unknown) => apiFetch<T>(path, { method: "PATCH", body }),
   delete: <T>(path: string) => apiFetch<T>(path, { method: "DELETE" }),
 };
+
+/** Multipart upload with progress (fetch cannot report upload progress). */
+export function uploadWithProgress<T>(
+  path: string,
+  file: File,
+  fields: Record<string, string>,
+  onProgress?: (percent: number) => void,
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${env.apiBase}${path}`);
+    xhr.withCredentials = true;
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && onProgress) {
+        onProgress(Math.round((event.loaded / event.total) * 100));
+      }
+    };
+
+    xhr.onload = () => {
+      let problem: { code?: string; detail?: string; errors?: FieldError[] } | null = null;
+      try {
+        problem = xhr.responseText ? JSON.parse(xhr.responseText) : null;
+      } catch {
+        problem = null;
+      }
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(problem as T);
+        return;
+      }
+      reject(
+        new ApiError(
+          xhr.status,
+          problem?.code ?? "UNKNOWN_ERROR",
+          problem?.detail ?? xhr.statusText,
+          problem?.errors ?? [],
+        ),
+      );
+    };
+
+    xhr.onerror = () =>
+      reject(
+        new ApiError(
+          0,
+          "NETWORK_ERROR",
+          "Не удалось загрузить файл. Проверьте соединение и попробуйте снова.",
+        ),
+      );
+
+    const form = new FormData();
+    for (const [key, value] of Object.entries(fields)) {
+      form.append(key, value);
+    }
+    form.append("file", file);
+    xhr.send(form);
+  });
+}

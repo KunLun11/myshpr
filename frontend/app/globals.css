@@ -1,12 +1,29 @@
 @import "tailwindcss";
 
+/*
+  Design system: Apple HIG × Mailchimp Pattern Library
+  ----------------------------------------------------
+  Apple gives the structure: clarity, deference, depth, an 8pt rhythm, soft
+  depth, restrained motion and one interactive accent.
+  Mailchimp gives the material: warm Peppercorn ink, paper neutrals
+  (Jasmine / Parsnip / Basmati), Kale as the interactive accent, Cavendish
+  yellow as a rare brand highlight and soft feedback tints for status.
+*/
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
@@ -14,44 +31,210 @@
   --color-ring: var(--ring);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
-  --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-destructive-soft-foreground: var(--destructive-soft-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
+  --color-success-soft-foreground: var(--success-soft-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-soft-foreground: var(--warning-soft-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-soft: var(--info-soft);
+  --color-info-soft-foreground: var(--info-soft-foreground);
+  --radius-xs: var(--r-xs);
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+  --radius-xl: var(--r-xl);
   --font-sans: var(--font-inter);
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #0f172a;
-  --card: #ffffff;
-  --card-foreground: #0f172a;
-  --primary: #1d4ed8;
-  --primary-foreground: #ffffff;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #1d4ed8;
-  --destructive: #dc2626;
-  --destructive-foreground: #ffffff;
-  --radius: 0.75rem;
+  color-scheme: light;
+
+  /* --- Mailchimp palette (raw values) ------------------------------- */
+  --mc-cavendish: #ffe01b;
+  --mc-peppercorn: #241c15;
+  --mc-oyster: #403b3b;
+  --mc-tuna: #8c8c8c;
+  --mc-portobello: #b7a9a1;
+  --mc-basmati: #dbd9d2;
+  --mc-parsnip: #efeeea;
+  --mc-jasmine: #f6f6f4;
+  --mc-coconut: #ffffff;
+  --mc-kale: #007c89;
+  --mc-kale-deep: #004e56;
+  --mc-kale-light: #4fc8d6;
+  --mc-yam: #fbcfbd;
+  --mc-cornflower: #c5dbf2;
+  --mc-cucumber: #d8eacc;
+  --mc-squash: #fbeeca;
+  --mc-radish: #f9e0fa;
+  --mc-dragonfruit: #ff3ebf;
+  --mc-plum: #692340;
+  --mc-apricot: #e7b75f;
+  --mc-apple: #00c14e;
+  --mc-pumpkin: #f25f25;
+  --mc-peppercorn-deep: #1a1512;
+  --mc-peppercorn-soft: #2e2620;
+
+  /* --- Apple structure: rhythm, radii, type, depth, motion ---------- */
+  --space-05: 0.25rem;
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2rem;
+  --space-5: 2.5rem;
+  --space-6: 3rem;
+  --space-8: 4rem;
+  --space-10: 5rem;
+  --space-12: 6rem;
+
+  --r-xs: 0.625rem; /* 10px */
+  --r-sm: 0.75rem; /* 12px */
+  --r-md: 0.875rem; /* 14px */
+  --r-lg: 1.125rem; /* 18px */
+  --r-xl: 1.25rem; /* 20px */
+  --r-round: 999px;
+  --radius: var(--r-lg);
+
+  --type-caption: 0.75rem; /* 12px */
+  --type-footnote: 0.8125rem; /* 13px */
+  --type-body-sm: 0.875rem; /* 14px */
+  --type-body: 0.9375rem; /* 15px */
+  --type-body-lg: 1.0625rem; /* 17px */
+  --type-title-3: 1.25rem; /* 20px */
+  --type-title-2: 1.5rem; /* 24px */
+  --type-title-1: 1.875rem; /* 30px */
+  --type-display: clamp(2.25rem, 2rem + 2vw, 3.5rem);
+  --leading-tight: 1.1;
+  --leading-snug: 1.3;
+  --leading-body: 1.5;
+  --measure: 70ch;
+  --tracking-display: -0.035em;
+  --tracking-heading: -0.02em;
+  --tracking-body: -0.011em;
+
+  --shadow-soft: 0 1px 2px rgb(36 28 21 / 4%), 0 10px 30px rgb(36 28 21 / 6%);
+  --shadow-card: 0 1px 2px rgb(36 28 21 / 5%), 0 16px 40px -24px rgb(36 28 21 / 18%);
+  --shadow-popover: 0 12px 32px -8px rgb(36 28 21 / 18%), 0 2px 8px rgb(36 28 21 / 6%);
+  --shadow-modal: 0 24px 64px -16px rgb(36 28 21 / 26%), 0 4px 16px rgb(36 28 21 / 8%);
+  --shadow-focus: 0 0 0 4px rgb(0 124 137 / 22%);
+
+  --motion-fast: 140ms;
+  --motion-base: 200ms;
+  --motion-panel: 280ms;
+  --motion-slow: 320ms;
+  --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+
+  --material-bar: rgb(246 246 244 / 82%);
+  --material-sheet: rgb(255 255 255 / 88%);
+
+  /* --- Semantic colors: light --------------------------------------- */
+  --background: var(--mc-jasmine);
+  --foreground: var(--mc-peppercorn);
+  --card: var(--mc-coconut);
+  --card-foreground: var(--mc-peppercorn);
+  --popover: var(--mc-coconut);
+  --popover-foreground: var(--mc-peppercorn);
+  --primary: var(--mc-kale);
+  --primary-foreground: var(--mc-coconut);
+  --primary-hover: var(--mc-kale-deep);
+  --brand: var(--mc-cavendish);
+  --brand-foreground: var(--mc-peppercorn);
+  --secondary: var(--mc-parsnip);
+  --secondary-foreground: var(--mc-peppercorn);
+  --muted: var(--mc-parsnip);
+  --muted-foreground: #716b67; /* Peppercorn-65, AA on Jasmine and Coconut */
+  --border: var(--mc-basmati);
+  --input: var(--mc-basmati);
+  --ring: var(--mc-kale);
+  --selection: var(--mc-cavendish);
+  --selection-foreground: var(--mc-peppercorn);
+  --overlay: rgb(36 28 21 / 40%);
+
+  --destructive: #a73205;
+  --destructive-foreground: var(--mc-coconut);
+  --destructive-hover: #7e2604;
+  --destructive-soft: var(--mc-yam);
+  --destructive-soft-foreground: #7a2a0c;
+
+  --success: #00753a;
+  --success-foreground: var(--mc-coconut);
+  --success-soft: var(--mc-cucumber);
+  --success-soft-foreground: #1f4a2a;
+
+  --warning: #8a5a00;
+  --warning-foreground: var(--mc-coconut);
+  --warning-soft: var(--mc-squash);
+  --warning-soft-foreground: #6b4a00;
+
+  --info: var(--mc-kale);
+  --info-foreground: var(--mc-coconut);
+  --info-soft: var(--mc-cornflower);
+  --info-soft-foreground: #1e3a5f;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0b1120;
-    --foreground: #e2e8f0;
-    --card: #111827;
-    --card-foreground: #e2e8f0;
-    --primary: #3b82f6;
-    --primary-foreground: #0b1120;
-    --muted: #1e293b;
-    --muted-foreground: #94a3b8;
-    --border: #1e293b;
-    --input: #1e293b;
-    --ring: #3b82f6;
-    --destructive: #f87171;
-    --destructive-foreground: #0b1120;
+    color-scheme: dark;
+
+    --background: var(--mc-peppercorn-deep);
+    --foreground: var(--mc-jasmine);
+    --card: var(--mc-peppercorn);
+    --card-foreground: var(--mc-jasmine);
+    --popover: var(--mc-peppercorn);
+    --popover-foreground: var(--mc-jasmine);
+    --primary: var(--mc-kale-light);
+    --primary-foreground: #10282b;
+    --primary-hover: #6fd5e0;
+    --brand: var(--mc-cavendish);
+    --brand-foreground: var(--mc-peppercorn);
+    --secondary: var(--mc-peppercorn-soft);
+    --secondary-foreground: var(--mc-jasmine);
+    --muted: var(--mc-peppercorn-soft);
+    --muted-foreground: var(--mc-portobello);
+    --border: var(--mc-oyster);
+    --input: var(--mc-oyster);
+    --ring: var(--mc-kale-light);
+    --selection: var(--mc-cavendish);
+    --selection-foreground: var(--mc-peppercorn);
+    --overlay: rgb(0 0 0 / 60%);
+
+    --destructive: #ff7a66;
+    --destructive-foreground: #2b0f0a;
+    --destructive-hover: #ff9484;
+    --destructive-soft: #3a1b14;
+    --destructive-soft-foreground: #ffb4a4;
+
+    --success: #5bd48b;
+    --success-foreground: #0c2a18;
+    --success-soft: #17331f;
+    --success-soft-foreground: #a6e3b8;
+
+    --warning: #f2b75f;
+    --warning-foreground: #2e1d04;
+    --warning-soft: #35260c;
+    --warning-soft-foreground: #ffd98f;
+
+    --info: var(--mc-kale-light);
+    --info-foreground: #10282b;
+    --info-soft: #1b2c3f;
+    --info-soft-foreground: #bbd8f5;
+
+    --shadow-soft: 0 1px 2px rgb(0 0 0 / 45%), 0 12px 32px rgb(0 0 0 / 32%);
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 45%), 0 24px 48px -24px rgb(0 0 0 / 55%);
+    --shadow-popover: 0 16px 40px -8px rgb(0 0 0 / 55%), 0 2px 8px rgb(0 0 0 / 35%);
+    --shadow-modal: 0 32px 72px -16px rgb(0 0 0 / 65%), 0 6px 20px rgb(0 0 0 / 40%);
+    --shadow-focus: 0 0 0 4px rgb(79 200 214 / 28%);
+
+    --material-bar: rgb(26 21 18 / 82%);
+    --material-sheet: rgb(36 28 21 / 90%);
   }
 }
 
@@ -62,6 +245,53 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, sans-serif;
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    sans-serif;
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-body);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
+
+::selection {
+  background: var(--selection);
+  color: var(--selection-foreground);
+}
+
+:where(h1, h2, h3, h4) {
+  letter-spacing: var(--tracking-heading);
+  line-height: var(--leading-tight);
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --material-bar: var(--background);
+    --material-sheet: var(--card);
+  }
+
+  .backdrop-blur,
+  .backdrop-blur-sm,
+  .backdrop-blur-md,
+  .backdrop-blur-lg,
+  .backdrop-blur-xl {
+    backdrop-filter: none !important;
+  }
+}
+
 
