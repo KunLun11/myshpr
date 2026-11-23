@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { UserPlus } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
 
@@ -51,12 +52,17 @@ export function RegisterForm() {
   }
 
   return (
-    <Card className="w-full shadow-[var(--shadow-soft)]">
-      <CardHeader>
-        <CardTitle className="text-2xl">Регистрация ученика</CardTitle>
-        <CardDescription>
-          Понадобится код класса. Его выдаёт учитель или администратор школы.
-        </CardDescription>
+    <Card className="w-full animate-pop-in">
+      <CardHeader className="gap-3">
+        <span className="icon-tile tile-mint size-11">
+          <UserPlus className="size-[1.15rem]" aria-hidden="true" />
+        </span>
+        <div className="space-y-1.5">
+          <CardTitle className="text-2xl">Регистрация ученика</CardTitle>
+          <CardDescription>
+            Понадобится код класса. Его выдаёт учитель или администратор школы.
+          </CardDescription>
+        </div>
       </CardHeader>
       <CardContent>
         <form className="space-y-4" onSubmit={handleSubmit}>
@@ -119,7 +125,7 @@ export function RegisterForm() {
 
         <p className="mt-6 text-sm text-[var(--muted-foreground)]">
           Уже есть аккаунт?{" "}
-          <Link href="/login" className="font-medium text-[var(--primary)]">
+          <Link href="/login" className="font-semibold text-[var(--primary)] hover:underline">
             Войти
           </Link>
         </p>

@@ -54,7 +54,7 @@ export function ShellNav({ role }: { role: UserRole }) {
   return (
     <nav
       aria-label="Основная навигация"
-      className="-mx-1 flex max-w-full items-center gap-1 overflow-x-auto px-1 sm:overflow-visible"
+      className="-mx-1 flex max-w-full flex-wrap items-center gap-0.5 px-1 sm:flex-nowrap sm:gap-1"
     >
       {items.map((item) => {
         const active =
@@ -66,10 +66,10 @@ export function ShellNav({ role }: { role: UserRole }) {
             href={item.href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "inline-flex min-h-11 shrink-0 items-center rounded-full px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
+              "inline-flex min-h-11 shrink-0 items-center rounded-full px-1 text-[13px] font-semibold transition-[background,color,box-shadow,transform] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] sm:px-3.5 sm:text-sm",
               active
-                ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
-                : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]",
+                ? "bg-primary-gradient text-[var(--primary-foreground)] shadow-[var(--shadow-glow)]"
+                : "text-[var(--muted-foreground)] hover:bg-[var(--glass-bg-strong)] hover:text-[var(--foreground)]",
             )}
           >
             {item.label}

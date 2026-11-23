@@ -5,11 +5,11 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export const inputClass =
-  "h-11 w-full rounded-[var(--radius-md)] border border-[var(--input)] bg-[var(--background)] px-3 text-sm outline-none transition-colors placeholder:text-[var(--muted-foreground)] focus-visible:ring-2 focus-visible:ring-[var(--ring)] disabled:opacity-60";
+  "h-11 w-full rounded-[var(--r-md)] border border-[var(--input)] bg-[var(--input-bg)] px-3.5 text-sm text-[var(--foreground)] outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-[var(--muted-foreground)] hover:border-[var(--ring)]/60 focus-visible:border-[var(--ring)] focus-visible:ring-2 focus-visible:ring-[var(--ring)] disabled:opacity-60";
 
 export const selectClass = cn(inputClass, "pr-8");
 export const textareaClass =
-  "min-h-24 w-full rounded-[var(--radius-md)] border border-[var(--input)] bg-[var(--background)] px-3 py-2 text-sm outline-none transition-colors placeholder:text-[var(--muted-foreground)] focus-visible:ring-2 focus-visible:ring-[var(--ring)]";
+  "min-h-24 w-full rounded-[var(--r-md)] border border-[var(--input)] bg-[var(--input-bg)] px-3.5 py-2.5 text-sm text-[var(--foreground)] outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-[var(--muted-foreground)] focus-visible:border-[var(--ring)] focus-visible:ring-2 focus-visible:ring-[var(--ring)]";
 
 interface FieldProps {
   label: string;

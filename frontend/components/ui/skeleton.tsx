@@ -6,7 +6,7 @@ export function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivEl
   return (
     <div
       aria-hidden="true"
-      className={cn("animate-pulse rounded-[var(--radius-md)] bg-[var(--muted)]", className)}
+      className={cn("skeleton-shimmer rounded-[var(--r-md)]", className)}
       {...props}
     />
   );

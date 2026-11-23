@@ -32,19 +32,26 @@ async function CabinetContent() {
 
   return (
     <div className="space-y-8">
-      <header className="space-y-2">
-        {user.school ? (
-          <p className="text-sm text-[var(--muted-foreground)]">{user.school.name}</p>
-        ) : null}
-        <h1 className="text-3xl font-semibold tracking-tight">
-          Здравствуйте, {firstName(user.full_name)}
-        </h1>
-        <p className="max-w-[70ch] text-[var(--muted-foreground)]">
-          Здесь виден ваш индивидуальный проект: тема, продукт и работа над этапами.
-        </p>
+      <header className="glass-sky relative overflow-hidden rounded-[var(--r-2xl)] p-6 sm:p-8">
+        <div
+          aria-hidden="true"
+          className="absolute -right-12 -top-16 size-48 rounded-full bg-sky-gradient opacity-25 blur-3xl"
+        />
+        <div className="relative space-y-3">
+          {user.school ? (
+            <p className="text-sm text-[var(--muted-foreground)]">{user.school.name}</p>
+          ) : null}
+          <h1 className="text-3xl leading-tight sm:text-4xl">
+            Здравствуйте,{" "}
+            <span className="text-gradient">{firstName(user.full_name)}</span>
+          </h1>
+          <p className="max-w-[70ch] text-[var(--muted-foreground)]">
+            Здесь виден ваш индивидуальный проект: тема, продукт и работа над этапами.
+          </p>
+        </div>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[1.15fr_1fr]">
+      <div className="stagger-list grid gap-6 lg:grid-cols-[1.15fr_1fr]">
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between gap-3">

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { LogIn } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
 
@@ -47,11 +48,16 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="w-full shadow-[var(--shadow-soft)]">
+    <Card className="w-full animate-pop-in">
       {next ? <SessionResume next={next} /> : null}
-      <CardHeader>
-        <CardTitle className="text-2xl">Вход</CardTitle>
-        <CardDescription>Войдите, чтобы продолжить работу над проектом.</CardDescription>
+      <CardHeader className="gap-3">
+        <span className="icon-tile tile-iris size-11">
+          <LogIn className="size-[1.15rem]" aria-hidden="true" />
+        </span>
+        <div className="space-y-1.5">
+          <CardTitle className="text-2xl">Вход</CardTitle>
+          <CardDescription>Войдите, чтобы продолжить работу над проектом.</CardDescription>
+        </div>
       </CardHeader>
       <CardContent>
         <form className="space-y-4" onSubmit={handleSubmit}>
@@ -87,7 +93,10 @@ export function LoginForm() {
 
         <p className="mt-6 text-sm text-[var(--muted-foreground)]">
           Нет аккаунта?{" "}
-          <Link href="/register" className="font-medium text-[var(--primary)]">
+          <Link
+            href="/register"
+            className="font-semibold text-[var(--primary)] hover:underline"
+          >
             Регистрация по коду класса
           </Link>
         </p>

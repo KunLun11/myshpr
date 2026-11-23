@@ -19,12 +19,21 @@ export const metadata: Metadata = { title: "Мои классы" };
 export default function TeacherPage() {
   return (
     <div className="space-y-8">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Мои классы</h1>
-        <p className="max-w-[70ch] text-[var(--muted-foreground)]">
-          Классы, где вы куратор. Код приглашения даёт ученику возможность
-          зарегистрироваться и попасть в класс.
-        </p>
+      <header className="glass-sky relative overflow-hidden rounded-[var(--r-2xl)] p-6 sm:p-8">
+        <div
+          aria-hidden="true"
+          className="absolute -right-12 -top-16 size-48 rounded-full bg-sky-gradient opacity-25 blur-3xl"
+        />
+        <div className="relative space-y-3">
+          <Badge variant="secondary">Кабинет учителя</Badge>
+          <h1 className="text-3xl leading-tight sm:text-4xl">
+            Мои <span className="text-gradient">классы</span>
+          </h1>
+          <p className="max-w-[70ch] text-[var(--muted-foreground)]">
+            Классы, где вы куратор. Код приглашения даёт ученику возможность
+            зарегистрироваться и попасть в класс.
+          </p>
+        </div>
       </header>
 
       <Suspense fallback={<Skeleton className="h-32 w-full" />}>
@@ -109,7 +118,7 @@ async function TeacherClasses() {
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       {classes.map((item) => (
-        <Card key={item.id}>
+        <Card key={item.id} interactive>
           <CardHeader>
             <div className="flex items-center justify-between gap-3">
               <CardTitle>{className(item)}</CardTitle>

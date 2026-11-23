@@ -22,7 +22,11 @@ export function Alert({ className, variant = "error", ...props }: AlertProps) {
   return (
     <div
       role="alert"
-      className={cn("rounded-[var(--radius-md)] border px-4 py-3 text-sm", VARIANT_CLASSES[variant], className)}
+      className={cn(
+        "rounded-[var(--r-md)] border px-4 py-3 text-sm shadow-[var(--shadow-soft)] backdrop-blur-sm",
+        VARIANT_CLASSES[variant],
+        className,
+      )}
       {...props}
     />
   );

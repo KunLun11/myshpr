@@ -20,28 +20,54 @@ export function ProjectStepper({ current = "idea" }: { current?: string }) {
   const currentRank = RANK.get(current) ?? 0;
 
   return (
-    <ol className="flex flex-col gap-2" aria-label="Этапы проекта">
+    <ol className="relative flex flex-col" aria-label="Этапы проекта">
       {STEPS.map((step, index) => {
         const done = index < currentRank;
         const active = index === currentRank;
         return (
           <li
             key={step.key}
-            className={cn(
-              "flex items-center gap-3 text-sm",
-              active && "font-semibold text-[var(--foreground)]",
-              !active && !done && "text-[var(--muted-foreground)]",
-            )}
+            className="relative flex items-center gap-3 py-1.5"
             aria-current={active ? "step" : undefined}
           >
-            {done ? (
-              <Check className="size-4 text-[var(--primary)]" aria-hidden="true" />
-            ) : active ? (
-              <CircleDot className="size-4 text-[var(--primary)]" aria-hidden="true" />
-            ) : (
-              <Circle className="size-4" aria-hidden="true" />
-            )}
-            <span>{step.label}</span>
+            {index < STEPS.length - 1 ? (
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "absolute left-[0.9375rem] top-9 h-[calc(100%-1.25rem)] w-0.5 rounded-full",
+                  done ? "bg-primary-gradient" : "bg-[var(--border)]",
+                )}
+              />
+            ) : null}
+            <span
+              className={cn(
+                "relative z-10 grid size-8 shrink-0 place-items-center rounded-full transition-transform duration-300",
+                done && "bg-[var(--success-soft)] text-[var(--success-soft-foreground)]",
+                active &&
+                  "scale-110 bg-primary-gradient text-[var(--primary-foreground)] shadow-[var(--shadow-glow)]",
+                !done &&
+                  !active &&
+                  "border border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)]",
+              )}
+            >
+              {done ? (
+                <Check className="size-4" aria-hidden="true" />
+              ) : active ? (
+                <CircleDot className="size-4" aria-hidden="true" />
+              ) : (
+                <Circle className="size-3" aria-hidden="true" />
+              )}
+            </span>
+            <span
+              className={cn(
+                "text-sm",
+                active && "font-semibold text-[var(--foreground)]",
+                done && "text-[var(--foreground)]",
+                !done && !active && "text-[var(--muted-foreground)]",
+              )}
+            >
+              {step.label}
+            </span>
           </li>
         );
       })}
