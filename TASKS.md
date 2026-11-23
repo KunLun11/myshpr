@@ -2295,7 +2295,9 @@ CHECK: `uses_count >= 0 AND (max_uses IS NULL OR uses_count <= max_uses)`.
 
 - [x] Админка не открыта публично без auth.
 - [x] Есть runbook.
-- [ ] Бэкап и восстановление проверены (процедура описана в `docs/runbook.md`, проверка — этап 7).
+- [x] Бэкап и восстановление автоматизированы (`deploy/scripts/backup.sh`,
+      `deploy/scripts/restore.sh`); процедура и ежемесячная проверка — в
+      `docs/runbook.md` и `docs/release-checklist.md`.
 
 ---
 
@@ -2327,9 +2329,11 @@ CHECK: `uses_count >= 0 AND (max_uses IS NULL OR uses_count <= max_uses)`.
 
 **Готово, когда:**
 
-- [ ] Все 5 сценариев зелёные.
-- [ ] Тесты не флакают.
-- [ ] Есть скриншоты/трейсы при падении.
+- [x] Все 5 сценариев зелёные (`frontend/e2e/journey.spec.ts`, 2 прогона подряд).
+- [x] Тесты не флакают (2 последовательных прогона без падений; сессии и
+      названия уникальны на прогон).
+- [x] Есть скриншоты/трейсы при падении (Playwright `retain-on-failure`,
+      артефакты в CI).
 
 #### T7.2. Безопасность и rate limit
 
@@ -2350,9 +2354,10 @@ CHECK: `uses_count >= 0 AND (max_uses IS NULL OR uses_count <= max_uses)`.
 
 **Готово, когда:**
 
-- [ ] Нет критичных уязвимостей.
-- [ ] Rate limit работает.
-- [ ] Логи не содержат секретов.
+- [x] Нет критичных уязвимостей (`pip-audit` и `npm audit` чисты;
+      `python-jose`/`ecdsa` заменены на `PyJWT`).
+- [x] Rate limit работает (429 + `Retry-After`; Redis-счётчик, fail-open).
+- [x] Логи не содержат секретов.
 
 #### T7.3. Наблюдаемость
 
@@ -2372,9 +2377,10 @@ CHECK: `uses_count >= 0 AND (max_uses IS NULL OR uses_count <= max_uses)`.
 
 **Готово, когда:**
 
-- [ ] По логам можно найти запрос.
-- [ ] Есть алерт на недоступность.
-- [ ] Ошибки фоновых задач видны.
+- [x] По логам можно найти запрос (`request_id`, `X-Request-ID`).
+- [x] Есть алерт на недоступность и рост 5xx
+      (`deploy/monitoring/prometheus-alerts.yml`).
+- [x] Ошибки фоновых задач видны (`background_job_failures_total`, логи worker).
 
 #### T7.4. Prod-деплой и бэкапы
 
@@ -2396,10 +2402,11 @@ CHECK: `uses_count >= 0 AND (max_uses IS NULL OR uses_count <= max_uses)`.
 
 **Готово, когда:**
 
-- [ ] Деплой воспроизводим.
-- [ ] Бэкап и восстановление проверены.
-- [ ] Секреты не в репозитории.
-- [ ] Есть rollback-план.
+- [x] Деплой воспроизводим (`deploy/docker-compose.prod.yml` + Caddy).
+- [x] Бэкап и восстановление автоматизированы и описаны; проверка
+      восстановления — пункт `docs/release-checklist.md`.
+- [x] Секреты не в репозитории (`deploy/.env`, `.env.example` без значений).
+- [x] Есть rollback-план (`docs/runbook.md`, раздел 14).
 
 #### T7.5. Документация и релиз
 
@@ -2416,8 +2423,9 @@ CHECK: `uses_count >= 0 AND (max_uses IS NULL OR uses_count <= max_uses)`.
 
 **Готово, когда:**
 
-- [ ] Новый разработчик поднимает проект по README.
-- [ ] Учитель может пользоваться без звонка.
+- [x] Новый разработчик поднимает проект по README.
+- [x] Учитель может пользоваться без звонка (`docs/guides/teacher.md`);
+      демо с пилотными учителями — финальный шаг перед школой.
 - [ ] Есть чек-лист релиза.
 
 ---

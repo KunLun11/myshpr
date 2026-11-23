@@ -6,7 +6,13 @@ dist/
 wheels/
 *.egg-info
 
+# Playwright
+frontend/playwright-report/
+frontend/e2e-results/
+
+# Uploaded files in local dev
+backend/media/
+
 # Virtual environments
 .venv
 .env
-.github
