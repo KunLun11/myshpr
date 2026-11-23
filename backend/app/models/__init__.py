@@ -1,5 +1,6 @@
 """Import every model so Alembic's ``target_metadata`` sees them all."""
 
+from app.models.audit import AuditLog
 from app.models.checklist import ChecklistItem, ProjectChecklistState
 from app.models.comment import ProjectComment
 from app.models.enums import (
@@ -26,6 +27,7 @@ from app.models.user import RefreshToken, StudentProfile, User
 
 __all__ = [
     "AcademicYear",
+    "AuditLog",
     "ChecklistItem",
     "ChecklistState",
     "Checkpoint",

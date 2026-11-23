@@ -17,6 +17,7 @@ from fastapi.responses import JSONResponse
 
 from app.api.v1.router import api_router
 from app.core.config import get_settings
+from app.core.csrf import allowed_origin_set, is_request_allowed
 from app.core.errors import AppError
 from app.core.logging import get_logger, setup_logging
 from app.db.session import engine
@@ -37,6 +38,37 @@ async def lifespan(app: FastAPI):
     yield
     await engine.dispose()
     logger.info("Application stopped")
+
+
+async def _origin_guard_middleware(request: Request, call_next: Callable[[Request], Awaitable]):
+    """Reject unsafe cross-origin browser requests (CSRF defence in depth)."""
+    settings = get_settings()
+    allowed = allowed_origin_set(settings.CORS_ORIGINS, settings.CSRF_TRUSTED_ORIGINS)
+    if not is_request_allowed(
+        method=request.method,
+        origin=request.headers.get("origin"),
+        referer=request.headers.get("referer"),
+        fetch_site=request.headers.get("sec-fetch-site"),
+        allowed=allowed,
+        fail_closed=settings.ENV == "prod",
+    ):
+        logger.warning(
+            "origin guard rejected: method=%s path=%s origin=%s",
+            request.method,
+            request.url.path,
+            request.headers.get("origin"),
+        )
+        return JSONResponse(
+            status_code=403,
+            content={
+                "type": "about:blank",
+                "title": "csrf_origin_rejected",
+                "status": 403,
+                "detail": "Запрос с недопустимого источника",
+                "code": "CSRF_ORIGIN_REJECTED",
+            },
+        )
+    return await call_next(request)
 
 
 async def _request_context_middleware(request: Request, call_next: Callable[[Request], Awaitable]):
@@ -117,6 +149,7 @@ def create_app() -> FastAPI:
             allow_headers=["*"],
         )
 
+    app.middleware("http")(_origin_guard_middleware)
     app.middleware("http")(_request_context_middleware)
     _register_error_handlers(app)
     app.include_router(api_router, prefix="/api/v1")

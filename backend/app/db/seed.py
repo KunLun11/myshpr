@@ -11,7 +11,7 @@ looked up before insert.
 
 import argparse
 import asyncio
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import select
@@ -23,6 +23,7 @@ from app.models import (
     AcademicYear,
     ChecklistItem,
     Checkpoint,
+    ClassInvite,
     InterestArea,
     ProductCategory,
     Project,
@@ -35,6 +36,7 @@ from app.models import (
 from app.models.enums import ChecklistState, CheckpointAudience, ProjectStatus, UserRole
 
 DEMO_PASSWORD = "student123"
+DEMO_INVITE_CODE = "DEMO2026"
 
 INTEREST_AREAS = [
     ("tech", "Техника и инженерия", "Роботы, устройства, конструирование"),
@@ -254,6 +256,20 @@ async def seed(session: AsyncSession) -> None:
         defaults={"curator_id": teacher.id},
     )
 
+    # A long-lived demo invite so the register page works out of the box.
+    await _get_or_create(
+        session,
+        ClassInvite,
+        code=DEMO_INVITE_CODE,
+        defaults={
+            "class_id": school_class.id,
+            "created_by": teacher.id,
+            "expires_at": datetime.now(UTC) + timedelta(days=365),
+            "max_uses": None,
+            "uses_count": 0,
+        },
+    )
+
     students: list[User] = []
     for full_name, email in STUDENTS:
         student = await _get_or_create(
@@ -334,6 +350,9 @@ async def _main(dev: bool) -> None:
         await seed(session)
     await engine.dispose()
     print("Seed complete.")
+    print(f"Teacher login: teacher@example.com / {DEMO_PASSWORD}")
+    print(f"Student login: student1@example.com / {DEMO_PASSWORD}")
+    print(f"Class invite code: {DEMO_INVITE_CODE}")
 
 
 if __name__ == "__main__":

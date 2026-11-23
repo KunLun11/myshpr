@@ -6,10 +6,10 @@ The app intentionally fails at startup when critical variables are missing.
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import field_validator, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 
@@ -48,8 +48,11 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_TTL_DAYS: int = 30
     BCRYPT_ROUNDS: int = 12
 
-    # CORS
-    CORS_ORIGINS: list[str] = []
+    # CORS / CSRF
+    # ``NoDecode`` keeps comma-separated values in .env from being JSON-decoded
+    # before the CSV validator below runs.
+    CORS_ORIGINS: Annotated[list[str], NoDecode] = []
+    CSRF_TRUSTED_ORIGINS: Annotated[list[str], NoDecode] = []
 
     # Topic check thresholds
     TOPIC_DUPLICATE_WARN: float = 0.55
@@ -71,8 +74,8 @@ class Settings(BaseSettings):
     MEDIA_ROOT: Path = Path("media")
     MAX_UPLOAD_BYTES: int = 25 * 1024 * 1024  # 25 MB
     MAX_FILES_PER_PROJECT: int = 10
-    ALLOWED_UPLOAD_MIME: list[str] = list(DEFAULT_UPLOAD_MIME)
-    ALLOWED_UPLOAD_EXTENSIONS: list[str] = list(DEFAULT_UPLOAD_EXTENSIONS)
+    ALLOWED_UPLOAD_MIME: Annotated[list[str], NoDecode] = list(DEFAULT_UPLOAD_MIME)
+    ALLOWED_UPLOAD_EXTENSIONS: Annotated[list[str], NoDecode] = list(DEFAULT_UPLOAD_EXTENSIONS)
     S3_ENDPOINT: str | None = None
     S3_BUCKET: str | None = None
     S3_ACCESS_KEY: str | None = None
@@ -87,7 +90,11 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str | None = None
 
     @field_validator(
-        "CORS_ORIGINS", "ALLOWED_UPLOAD_MIME", "ALLOWED_UPLOAD_EXTENSIONS", mode="before"
+        "CORS_ORIGINS",
+        "CSRF_TRUSTED_ORIGINS",
+        "ALLOWED_UPLOAD_MIME",
+        "ALLOWED_UPLOAD_EXTENSIONS",
+        mode="before",
     )
     @classmethod
     def _split_csv(cls, value: object) -> object:
