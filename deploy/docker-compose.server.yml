@@ -1,0 +1,54 @@
+# Override для деплоя my-school-project на VPS, где уже работает vollmira
+# и порты 80/443 держит edge-Caddy (см. deploy/edge/).
+#
+#   docker compose -f deploy/docker-compose.prod.yml \
+#                  -f deploy/docker-compose.server.yml up -d --build
+#
+# Отличия от «самостоятельного» docker-compose.prod.yml:
+#   1. сервис `caddy` не запускается (профиль `tls`): TLS и оба домена
+#      обслуживает единый edge-Caddy;
+#   2. `frontend` публикуется только на loopback — оттуда его забирает
+#      edge-Caddy. Postgres/Redis/FastAPI по-прежнему не опубликованы;
+#   3. заданы лимиты памяти под сервер 4 ГБ, где рядом живёт vollmira.
+
+services:
+  # Профиль, который никто не включает → контейнер не создаётся.
+  # Переменные DOMAIN/ACME_EMAIL всё равно должны быть в deploy/.env:
+  # compose интерполирует весь файл до фильтрации по профилям.
+  caddy:
+    profiles: ["tls"]
+
+  frontend:
+    ports:
+      - "127.0.0.1:3000:3000"
+
+  backend:
+    deploy:
+      resources:
+        limits:
+          memory: 640M
+
+  worker:
+    deploy:
+      resources:
+        limits:
+          memory: 320M
+
+  db:
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    # Postgres под лимитом: не раздувать shared_buffers
+    command:
+      - postgres
+      - -c
+      - shared_buffers=128MB
+      - -c
+      - max_connections=50
+
+  redis:
+    deploy:
+      resources:
+        limits:
+          memory: 192M

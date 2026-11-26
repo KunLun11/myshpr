@@ -1,0 +1,46 @@
+# Edge-прокси VPS: Caddy на :80/:443 для my-proekt.ru и vollmira.ru.
+#
+# Отдельный compose-проект (имя `edge`, каталог /opt/edge), а не сервис в
+# стеке my-school-project: иначе `docker compose down` школьного стека уронил
+# бы вход и для vollmira.
+#
+#   sudo mkdir -p /opt/edge && sudo cp Caddyfile docker-compose.yml /opt/edge/
+#   cd /opt/edge && docker compose up -d
+#   docker compose logs -f caddy
+#
+# network_mode: host — Caddy слушает 80/443 напрямую и ходит к локальным
+# портам 127.0.0.1:3000 (Next.js) и 127.0.0.1:8000 (gunicorn) без docker-сети.
+# Работает только на Linux, что для VPS и нужно.
+#
+# ACME_EMAIL задаётся в /opt/edge/.env (см. deploy/SERVER.md).
+
+name: edge
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      # React-сборка vollmira (rsync из frontend-репозитория)
+      - /var/www/vollmira:/srv/vollmira:ro
+      # collectstatic и пользовательские файлы Django
+      - /home/deploy/vollmira-backend/staticfiles:/srv/vollmira-static:ro
+      - /home/deploy/vollmira-backend/media:/srv/vollmira-media:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  # В caddy_data лежат выпущенные сертификаты.
+  # НИКОГДА не запускайте `docker compose down -v` в этом каталоге —
+  # иначе Caddy заново пойдёт в Let's Encrypt и упрётся в лимит выпусков.
+  caddy_data:
+  caddy_config:

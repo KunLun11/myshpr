@@ -1,0 +1,102 @@
+# Единая точка входа VPS: один Caddy на :80/:443 обслуживает два сайта.
+#
+#   my-proekt.ru    → 127.0.0.1:3000  (Next.js из deploy/docker-compose.prod.yml)
+#   vollmira.ru     → 127.0.0.1:8000  (Django/gunicorn, systemd-юнит vollmira)
+#                   + статика React SPA из /srv/vollmira
+#                   + Django static/media из каталогов бэкенда
+#
+# Сертификаты Let's Encrypt выпускает и продлевает сам Caddy (HTTP-01, данные
+# в томе caddy_data). nginx и certbot на сервере больше не используются.
+#
+# ВАЖНО, перед первым запуском:
+#   1. A-записи всех перечисленных ниже имён должны указывать на этот сервер,
+#      иначе ACME-проверка не пройдёт и сайт останется без HTTPS.
+#      Проверка: dig +short my-proekt.ru www.my-proekt.ru vollmira.ru www.vollmira.ru
+#   2. Если www.* не резолвится — уберите это имя из списка адресов блока
+#      (Caddy будет бесконечно повторять выпуск сертификата для него).
+#   3. Пути /srv/... — это монтирования из deploy/edge/docker-compose.yml.
+#      Статику vollmira продолжает обновлять frontend-воркфлоу (rsync).
+#
+# Проверка синтаксиса без запуска:
+#   docker run --rm -v "$PWD/Caddyfile:/etc/caddy/Caddyfile" caddy:2-alpine \
+#     caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+{
+	email {$ACME_EMAIL}
+
+	# Для отладки, чтобы не тратить лимиты Let's Encrypt, раскомментируйте:
+	# acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+
+# ---------------------------------------------------------------- my-proekt.ru
+my-proekt.ru {
+	encode zstd gzip
+
+	# MAX_UPLOAD_BYTES=25 МиБ + запас на multipart
+	request_body {
+		max_size 30MB
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# Метрики только из приватной сети (повторяет правило из deploy/Caddyfile)
+	@metrics path /api/v1/metrics /api/backend/metrics
+	respond @metrics 404
+
+	# Next.js: UI + same-origin BFF (/api/backend/* он проксирует в FastAPI сам)
+	# X-Forwarded-Proto/For/Host Caddy добавляет сам.
+	reverse_proxy 127.0.0.1:3000 {
+		header_up X-Real-IP {remote_host}
+	}
+}
+
+# www → апекс. Удалите блок, если www.my-proekt.ru не указывает на этот сервер.
+www.my-proekt.ru {
+	redir https://my-proekt.ru{uri} permanent
+}
+
+# ----------------------------------------------------------------- vollmira.ru
+vollmira.ru, www.vollmira.ru {
+	encode zstd gzip
+
+	# nginx-конфиг ограничивал тело 10m — сохраняем то же поведение
+	request_body {
+		max_size 10MB
+	}
+
+	# Django API
+	handle /api/* {
+		reverse_proxy 127.0.0.1:8000
+	}
+
+	# Django admin
+	handle /admin/* {
+		reverse_proxy 127.0.0.1:8000
+	}
+
+	# collectstatic → /home/deploy/vollmira-backend/staticfiles
+	handle_path /static/* {
+		root * /srv/vollmira-static
+		file_server
+		header Cache-Control "public, max-age=2592000"
+	}
+
+	# Пользовательские файлы (фото профилей)
+	handle_path /media/* {
+		root * /srv/vollmira-media
+		file_server
+		header Cache-Control "public, max-age=604800"
+	}
+
+	# React SPA с fallback на index.html (аналог nginx try_files)
+	handle {
+		root * /srv/vollmira
+		try_files {path} /index.html
+		file_server
+		header /index.html Cache-Control "no-cache"
+	}
+}

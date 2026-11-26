@@ -49,6 +49,13 @@ docker compose -f docker-compose.prod.yml down
 
 Требуется Docker Compose ≥ 2.24.
 
+### Если на сервере уже работает другой сервис
+
+Когда на VPS уже живёт другой сайт (например, vollmira) и порты 80/443 заняты,
+используйте серверный вариант — `deploy/SERVER.md` и
+`deploy/docker-compose.server.yml` (Caddy из стека отключается, вход держит
+единый edge-Caddy из `deploy/edge/`).
+
 ## Общее
 
 ```bash
